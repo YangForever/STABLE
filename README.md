@@ -2,7 +2,8 @@
 
 This repository contains the open-source code for the paper:
 
-**"Preserving Spatial and Quantitative Information in Unpaired Biomedical Image-to-Image Translation"**
+**"Preserving Spatial and Quantitative Information in Unpaired Biomedical Image-to-Image Translation"** 
+Published in Cell Reports Methods. https://doi.org/10.1016/j.crmeth.2025.101074
 
 ---
 
