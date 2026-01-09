@@ -190,9 +190,9 @@ class StableTrainer:
         valid = 1
         fake = 0
         
-        for epoch in tqdm(range(epoch_start, epoch_end), desc="Training", position=0):
+        for epoch in range(epoch_start, epoch_end):
             
-            for _, batch in enumerate(tqdm(train_dataloader, desc=f"Epoch {epoch}", leave=False)):
+            for i, batch in enumerate(train_dataloader):
                 
                 self.model.train()
 
@@ -221,9 +221,14 @@ class StableTrainer:
                 loss_G += self.lambda_info * loss_com_rec_2
 
                 # Image cycle reconstruction loss
-                weight_cyc = self.calculate_weight(self.batches_done, 
-                                                   self.lambda_cyc_growth_target*len(train_dataloader), 
-                                                   0, self.lambda_cyc, 1)
+                if self.lambda_cyc_growth_target is None:
+                    weight_cyc = self.calculate_weight(self.batches_done, 
+                                                    self.lambda_cyc_growth_target, 
+                                                    0, self.lambda_cyc, 1)
+                else:
+                    weight_cyc = self.calculate_weight(self.batches_done, 
+                                                    self.lambda_cyc_growth_target*len(train_dataloader), 
+                                                    0, self.lambda_cyc, 1)
                 
                 loss_img_cyc_1 = self.criterion_recon_cyc(X_121, X_1)
                 loss_G += weight_cyc * loss_img_cyc_1
@@ -270,6 +275,8 @@ class StableTrainer:
                     self.log_images(self.batches_done, 'Train', X_1, X_2, Z_1, Z_2, X_12, X_21, Z_12, Z_21, X_121, X_212)
                     
                 self.batches_done += 1
+                print('[Epoch %d/%d] [Batch %d/%d] [G loss: %.4f] [D1 loss: %.4f] [D2 loss: %.4f]' %
+                        (epoch+1, epoch_end, i+1, len(train_dataloader), loss_G.item(), loss_D1.item(), loss_D2.item()))
                 
             if epoch % self.log_val_epoch == 0:
                 self.model.eval()
