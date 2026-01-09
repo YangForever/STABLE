@@ -1,7 +1,7 @@
 import torch
 import itertools
 
-from stable.models import UNet, MultiDiscriminator
+from models.STABLE.stable.models import UNet, MultiDiscriminator
 
 class StableModel(torch.nn.Module):
     def __init__(self, n_in, n_out, n_info, G_mid_channels=[64,128,256,512,1024], G_norm_type='batch', G_demodulated=True, enc_act='relu', dec_act='relu', momentum=0.1, D_n_scales=1, D_n_layers=3, D_ds_stride=2, D_norm_type='batch', device='cuda'):
@@ -25,9 +25,9 @@ class StableModel(torch.nn.Module):
         
         self.Enc1 = UNet(n_in=n_in, n_out=n_info, mid_channels=G_mid_channels, norm_type=G_norm_type, 
                          demodulated=G_demodulated, act=enc_act, momentum=momentum).to(device)
-        self.Dec1 = UNet(n_in=n_info, n_out=n_out, mid_channels=G_mid_channels, norm_type=G_norm_type, 
+        self.Dec1 = UNet(n_in=n_info, n_out=n_in, mid_channels=G_mid_channels, norm_type=G_norm_type, 
                          demodulated=G_demodulated, act=dec_act, momentum=momentum).to(device)
-        self.Enc2 = UNet(n_in=n_in, n_out=n_info, mid_channels=G_mid_channels, norm_type=G_norm_type, 
+        self.Enc2 = UNet(n_in=n_out, n_out=n_info, mid_channels=G_mid_channels, norm_type=G_norm_type, 
                          demodulated=G_demodulated, act=enc_act, momentum=momentum).to(device)
         self.Dec2 = UNet(n_in=n_info, n_out=n_out, mid_channels=G_mid_channels, norm_type=G_norm_type, 
                          demodulated=G_demodulated, act=dec_act, momentum=momentum).to(device)
@@ -155,3 +155,25 @@ class StableModel(torch.nn.Module):
         X_12 = self.Dec2(self.Enc1(X_1))
         
         return X_12
+
+# ## test
+if __name__ == '__main__':
+    
+    model = StableModel(n_in=1, n_out=3, n_info=8, device='cuda')
+    X_1 = torch.randn(2, 1, 256, 256)
+    X_2 = torch.randn(2, 3, 256, 256)
+    # to cuda
+    X_1 = X_1.to('cuda')
+    X_2 = X_2.to('cuda')
+    Z_1, Z_2, X_12, X_21, Z_12, Z_21, X_121, X_212 = model.forward_G(X_1, X_2)
+    print(f"Z_1 shape: {Z_1.shape}, Z_2 shape: {Z_2.shape}")
+    print(f"X_12 shape: {X_12.shape}, X_21 shape: {X_21.shape}")
+    print(f"Z_12 shape: {Z_12.shape}, Z_21 shape: {Z_21.shape}")
+    print(f"X_121 shape: {X_121.shape}, X_212 shape: {X_212.shape}")
+    
+    D1_out = model.forward_D1(X_1)
+    D2_out = model.forward_D2(X_2)
+    print(f"D1 output length: {len(D1_out)}, D2 output length: {len(D2_out)}")
+    
+    X_12_infer = model.infer(X_1)
+    print(f"Inferred X_12 shape: {X_12_infer.shape}")
