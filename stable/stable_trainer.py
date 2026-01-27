@@ -28,7 +28,7 @@ class StableTrainer:
         settings = {**settings, 'lr_G': lr_G, 'lr_D': lr_D, 'seed': seed, 'lambda_adv': lambda_adv, 'lambda_info': lambda_info, 'lambda_cyc': lambda_cyc, 'lambda_cyc_growth_target': lambda_cyc_growth_target}
         
         # Set up directories
-        self.experiment_dir = os.path.join(output_dir, "experiments", exp_name)
+        self.experiment_dir = os.path.join(output_dir, exp_name)
         if not os.path.exists(self.experiment_dir):
             os.makedirs(self.experiment_dir)
         self.saved_checkpoints_dir = os.path.join(self.experiment_dir, f"saved_models")
@@ -37,7 +37,7 @@ class StableTrainer:
         
         settings_save_file = os.path.join(self.experiment_dir, f"settings.json")
         with open(settings_save_file, 'w') as file:
-            json.dump(settings, file)
+            json.dump(settings, file, indent=4)
             
         writer_logdir = os.path.join(self.experiment_dir, f"runs")
         os.makedirs(writer_logdir, exist_ok=True)
@@ -179,7 +179,7 @@ class StableTrainer:
             self.writer.add_image(f"01. Input->Output ({mode})/00. Overlay Input Image (X_12)", X_1_overlay_grid, epoch)
             self.writer.add_image(f"02. Output->Input ({mode})/00. Overlay Output Image (X_21)", X_2_overlay_grid, epoch)
         
-    def train(self, train_dataloader, val_dataloader, epoch_start=0, epoch_end=99999):
+    def train(self, train_dataloader, val_dataloader, epoch_start=0, epoch_end=100):
         if epoch_start != 0:
             self.load_state_dict_train(epoch_start)
             print(f"Loaded model from epoch {epoch_start}")
@@ -272,12 +272,15 @@ class StableTrainer:
                     self.writer.add_scalar("02.Generator B->A (Train)/02. Common Feature Reconstruction Loss B->A", loss_com_rec_2, self.batches_done)
                     self.writer.add_scalar("02.Generator B->A (Train)/03. Image Cycle Reconstruction Loss B->A", loss_img_cyc_2, self.batches_done)
                     
-                    self.log_images(self.batches_done, 'Train', X_1, X_2, Z_1, Z_2, X_12, X_21, Z_12, Z_21, X_121, X_212)
+            
                     
                 self.batches_done += 1
                 print('[Epoch %d/%d] [Batch %d/%d] [G loss: %.4f] [D1 loss: %.4f] [D2 loss: %.4f]' %
                         (epoch+1, epoch_end, i+1, len(train_dataloader), loss_G.item(), loss_D1.item(), loss_D2.item()))
-                
+            
+            # log images at the end of each epoch
+            self.log_images(self.batches_done, 'Train', X_1, X_2, Z_1, Z_2, X_12, X_21, Z_12, Z_21, X_121, X_212)
+
             if epoch % self.log_val_epoch == 0:
                 self.model.eval()
                 with torch.no_grad():
