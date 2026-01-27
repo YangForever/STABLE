@@ -272,11 +272,11 @@ class StableTrainer:
                     self.writer.add_scalar("02.Generator B->A (Train)/02. Common Feature Reconstruction Loss B->A", loss_com_rec_2, self.batches_done)
                     self.writer.add_scalar("02.Generator B->A (Train)/03. Image Cycle Reconstruction Loss B->A", loss_img_cyc_2, self.batches_done)
                     
+                    print('[Epoch %d/%d] [Batch %d/%d] [G loss: %.4f] [D1 loss: %.4f] [D2 loss: %.4f]' %
+                        (epoch+1, epoch_end, i+1, len(train_dataloader), loss_G.item(), loss_D1.item(), loss_D2.item()))
             
                     
                 self.batches_done += 1
-                print('[Epoch %d/%d] [Batch %d/%d] [G loss: %.4f] [D1 loss: %.4f] [D2 loss: %.4f]' %
-                        (epoch+1, epoch_end, i+1, len(train_dataloader), loss_G.item(), loss_D1.item(), loss_D2.item()))
             
             # log images at the end of each epoch
             self.log_images(self.batches_done, 'Train', X_1, X_2, Z_1, Z_2, X_12, X_21, Z_12, Z_21, X_121, X_212)
