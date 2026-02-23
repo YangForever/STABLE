@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
+import time
 
 class StableTrainer:
     def __init__(self, model, output_dir, exp_name, lambda_adv, lambda_info, lambda_cyc, lambda_cyc_growth_target=None, lr_G=3e-4, lr_D=3e-4, seed=None, log_train_iter=1, log_val_epoch=1, checkpoint_epoch=1):
@@ -191,7 +192,7 @@ class StableTrainer:
         fake = 0
         
         for epoch in range(epoch_start, epoch_end):
-            
+            start_time = time.time()
             for i, batch in enumerate(train_dataloader):
                 
                 self.model.train()
@@ -277,9 +278,10 @@ class StableTrainer:
             
                     
                 self.batches_done += 1
-            
+
+            print(f"Time taken for epoch {epoch+1}: {time.time() - start_time:.2f} seconds")
             # log images at the end of each epoch
-            self.log_images(self.batches_done, 'Train', X_1, X_2, Z_1, Z_2, X_12, X_21, Z_12, Z_21, X_121, X_212)
+            self.log_images(epoch+1, 'Train', X_1, X_2, Z_1, Z_2, X_12, X_21, Z_12, Z_21, X_121, X_212)
 
             if epoch % self.log_val_epoch == 0:
                 self.model.eval()
